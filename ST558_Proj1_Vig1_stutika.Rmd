@@ -1,7 +1,7 @@
 ---
 title: "ST558_Proj1_Vig1_stutika"
 author: "Sridhar Tutika"
-date: "10/17/2019"
+date: "10/18/2019"
 output:  
   html_document:  
     theme: default
@@ -172,4 +172,4 @@ p +  geom_point(aes(colour = Company))+ geom_smooth(aes(group=Company),method = 
 ```
 
 ## Conclusion
-The Historical data summaries and visuals shows the consistency and positive upward trend of the stock value of the mighty four. This indicates the reason why they could pass/nearly pass the One Trillion Race. Investors future sentiment and company's future performance followed the historical market trends.
+The Historical data summaries and visuals shows consistency and positive corelation/upward trend of the stock value of the mighty four. This indicates the reason why they could pass/nearly pass the One Trillion Race. Investors future sentiment and company's future performance followed the historical market trends.

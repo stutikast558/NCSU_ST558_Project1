@@ -1,0 +1,175 @@
+---
+title: "ST558_Proj1_Vig1_stutika"
+author: "Sridhar Tutika"
+date: "10/17/2019"
+output:  
+  html_document:  
+    theme: default
+    toc: TRUE
+    toc_float: FALSE  
+    toc_depth: 3  
+---
+```{r setup, include=FALSE, echo=TRUE}
+library(ggplot2)
+library(dplyr)
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, warning = FALSE)  
+```
+# The Mighty 4
+## Introduction
+Since 2018, most investors and traders around the world are closely watching which Tech Company will hit the  **Trillion dollar mark. **  Eventually, Apple made a touchdown on the finish line when their stock price hit an all-time high of $208.74 per share on intra-day trading on the 2nd of August, 2018 (NASDAQ.) 
+
+Apple had the glory, cruising at the top alone, but they didn’t enjoy this lonely stay at the top for long. Amazon followed in the rally immediately after, hitting the trillion dollar mark just one month after Apple had done the unbelievable. Microsoft became the third company to complete the Trillion race. The eyes of every market watcher were on the four tech giants since the race to a trillion has started. Alphabet (Google's parent company) hasn’t made it there yet, but it already worth more than $800 billion and, while well short of Apple, it is now jumping into that batch of companies that are on their way to being a $1 trillion company. For details, read the article on the [Race to One Trillion]( https://www.kiplinger.com/article/investing/T052-C016-S002-join-the-race-to-1-trillion-stocks.html).
+
+```{r pic, echo=FALSE}  
+knitr::include_graphics("big4.JPG")
+```
+```{r read1, echo=FALSE, include=TRUE,message=FALSE}
+library(Lahman)
+library(tidyverse)
+library(dplyr)
+library(readr)
+library(haven)
+library(readxl)
+library(DT)
+```
+
+## Data
+
+To analyze the historical stock market performance of the **Mighty 4 ** , I obtained quarterly Market Sentiment and Open/Close values of the four stocks from 1994 to 2017 in JSON format from public datasets source [kaggle](https://www.kaggle.com/wardbradt/sec-quarterly-reports-sentiments)
+
+## Process and Packages
+
+The four JSON files for four companies have been read into R using rjson package. Though there are two other packages, jsonlite and RJSONIO, I chose the standard and easy to use functions from  rjason pacjage because RJSONIO has reported performance issues when handling large JSON files and jsonline is specially useful when using APIs where as my project has downloaded JSON files from Kaggle. 
+
+Using the function _fromJSON_, I read four JSON files for four stocks; the obtained _list_ objects have been converted into data frame and all four data frames have been merged. Additional columns such as company and Percentage change for Open/Closing value of the stock have been calculated. 
+
+```{r read10, echo=TRUE, include=TRUE,message=FALSE}
+library(rjson)
+require(devtools)
+#Reading Apple stock info
+ls_apple <- fromJSON(file="AAPL_info.json")
+len1 <- length(ls_apple)
+#Converting from a Lis to a data frame
+df_ap1 <- data.frame(matrix(unlist(ls_apple),nrow = len1, byrow = T))
+#Preview the apple data as we read
+dplyr::tbl_df(df_ap1) %>% head(6) %>% knitr::kable(col.names = c("Date", "Sentiment", "Open Value", "Close Value"),caption = "Preview of Apple stock Quartely Data")
+#Add the company variable to the data frame
+df_apple <- dplyr::mutate(df_ap1,Company="Apple")
+#Reading Amazon stock info
+ls_amzn <- fromJSON(file="AMZN_info.json")
+len1 <- length(ls_amzn)
+#Converting from a Lis to a data frame 
+df_am1 <- data.frame(matrix(unlist(ls_amzn),nrow = len1, byrow = T))
+df_amzn <- dplyr::mutate(df_am1,Company="Amazon")
+#Reading Google stock info
+ls_goog <- fromJSON(file="GOOG_info.json")
+len1 <- length(ls_goog)
+#Converting from a Lis to a data frame 
+df_gg1 <- data.frame(matrix(unlist(ls_goog),nrow = len1, byrow = T))
+df_goog <- dplyr::mutate(df_gg1,Company="Google")
+#Reading Microsoft stock info
+ls_msft <- fromJSON(file="MSFT_info.json")
+len1 <- length(ls_msft)
+#Converting from a Lis to a data frame 
+df_ms1 <- data.frame(matrix(unlist(ls_msft),nrow = len1, byrow = T))
+df_msft <- dplyr::mutate(df_ms1,Company="Microsoft")
+# Merging the dataframe as one combined frame
+df_merge1 <- rbind(df_apple,df_amzn)
+df_merge2 <- rbind(df_goog,df_msft)
+df_all4 <- rbind(df_merge1,df_merge2)
+# Set Column Names
+names(df_all4)[1] <- paste("Date")
+names(df_all4)[2] <- paste("Sentiment")
+names(df_all4)[3] <- paste("Open")
+names(df_all4)[4] <- paste("Close")
+# Update the Column attributes accurately
+df_all4$Date  <- as.character(df_all4$Date)
+df_all4$Sentiment  <- round(as.numeric(as.character(df_all4$Sentiment)),4)
+df_all4$Open  <- round(as.numeric(as.character(df_all4$Open)),2)
+df_all4$Close  <- round(as.numeric(as.character(df_all4$Close)),2)
+df_all4$Company <- as.factor(df_all4$Company)
+#Calculate Open/Close Change Percentage
+df_all4_final <- dplyr::mutate(df_all4,Change_Percentage=round((((df_all4$Open-df_all4$Close)/df_all4$Open)*100),2))
+```
+
+
+```{r funIQR, echo=TRUE, include=TRUE}
+# Function to calucalte Summary stats 
+getIQR <- function(input1)
+{
+  subset1 <- filter(df_all4_final, Company == input1) %>% select (Sentiment,Open,Close,Change_Percentage)
+  p <- as.numeric(gsub('.*:', '', summary(subset1)))
+  q <- data.frame(subset1[0,])
+  attributes(q)$row.names[1] <- "Min."
+  attributes(q)$row.names[2] <- "1st Qu."
+  attributes(q)$row.names[3] <- "Median"
+  attributes(q)$row.names[4] <- "Mean"
+  attributes(q)$row.names[5] <- "3rd Qu."
+  attributes(q)$row.names[6] <- "Max."
+  q$Sentiment <- p[1:6]
+  q$Open <- p[7:12]
+  q$Close <- p[13:18]
+  q$Change_Percentage <- p[19:24]
+  text1 <- paste("Summary of ", input1)
+  r <- knitr::kable(q,digits=4,caption=text1)
+  return (r)
+}
+```
+## Numeric Summaries by Company (based on Quarterly data from 1994 to 2017)
+The tables below provide summary statistics for each of the four mighty tech companies. The statistics include
+Maximum, Minimum, Mean, Median, 1st and 3rd Quartile of Sentiment, Open, Close and Open/Close Change percentage.
+
+```{r read22, echo=TRUE, include=TRUE,message=FALSE}
+# Call the function getIQR to get the summary stats for for each of the Stock ticker
+s1 <- getIQR("Apple")
+s1
+s2 <- getIQR("Amazon")
+s2
+s3 <- getIQR("Google")
+s3
+s3 <- getIQR("Microsoft")
+s3
+```
+
+## Visuals
+### Boxplot for Comparison
+
+Below two box plots describe the five number summary min, Q1, median, Q3 and max for each company's stock opening value and sentiment value. The scatter plot of Opening value  and Sentiment  have been super imposed on top of the box plots.
+
+As we observe, the Amazon and Apple has maximum value outliers much farther than the maximum range. Also Microsoft 1 st quartile and median sentiment values are one and the same; though its sentiment has mimumum outliers, it performed relatively well in the market.
+
+```{r read6, echo=TRUE, include=TRUE,message=FALSE}
+g <- ggplot(df_all4_final, aes(x = Company, y = Open),alpha = 0.6, size = 0.8, position = "jitter")
+g + geom_boxplot() + geom_jitter(aes(colour = Company)) + ggtitle("Boxplot for Stock Opening value")
+g <- ggplot(df_all4_final, aes(x = Company, y = Sentiment),alpha = 0.6, size = 0.8, position = "jitter")
+g + geom_boxplot() + geom_jitter(aes(colour = Company)) + ggtitle("Boxplot for Stock Sentiment")
+```
+
+### Multiple Distributions Present
+
+The histogram for stock closing value below provides the density distribution of closing valueh accross all the Companies. The Kernel (red line) determines the weight given to nearby points. The second histogram for Stock open/close change percentage breaks up the information for each of the four companies.
+
+```{r read7, echo=TRUE, include=TRUE,message=FALSE}
+g <- ggplot(df_all4_final, aes(x = Close)) 
+g + geom_histogram(aes(y = ..density..),fill,size=3,binwidth=0.25) +geom_density(adjust = 0.4, alpha = 0.5,size=3,color="red",position = "stack") + ggtitle("Histogram for Stock Closing Value")
+p <- ggplot(df_all4_final, aes(x = Change_Percentage)) 
+p + geom_histogram(aes(y = ..density..),fill,size=3,binwidth=0.2) +geom_density(alpha = 0.5,size=2,color="red",position = "stack")+facet_wrap(df_all4_final$Company) + ggtitle("Histogram for Stock value Open/Close Change Percentage")
+```
+
+### Scatter Plot
+
+The Scatter plots of Open vs Close shows linear trend line for all four stocks. The second scatter plot of sentiment vs open/close change percentage provides the information on how change percentage is affected by the sentiment and vice versa. The red line shows the linear upward trend and greay area around the red line gives the confidence region.
+
+```{r read8, echo=TRUE, include=TRUE,message=FALSE}
+g <- ggplot(df_all4_final, aes(x = Open, y = Close)) 
+g +  geom_point(aes(colour = Company))+ geom_smooth(aes(group=Company),method = lm, col = "Red") + ggtitle("Stock Open vs Close")
+```
+
+
+```{r read9, echo=TRUE, include=TRUE,message=FALSE}
+p <- ggplot(df_all4_final, aes(x = Sentiment, y = Change_Percentage)) 
+p +  geom_point(aes(colour = Company))+ geom_smooth(aes(group=Company),method = lm, col = "Red") + ggtitle("Stock Sentiment vs Open/Close value Chanage Percentage")
+```
+
+## Conclusion
+The Historical data summaries and visuals shows the consistency and positive upward trend of the stock value of the mighty four. This indicates the reason why they could pass/nearly pass the One Trillion Race. Investors future sentiment and company's future performance followed the historical market trends.

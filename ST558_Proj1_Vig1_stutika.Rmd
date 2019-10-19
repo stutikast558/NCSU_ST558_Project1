@@ -39,7 +39,7 @@ To analyze the historical stock market performance of the **Mighty 4 ** , I obta
 
 ## Process and Packages
 
-The four JSON files for four companies have been read into R using rjson package. Though there are two other packages, jsonlite and RJSONIO, I chose the standard and easy to use functions from  rjason pacjage because RJSONIO has reported performance issues when handling large JSON files and jsonline is specially useful when using APIs where as my project has downloaded JSON files from Kaggle. 
+The four JSON files for four companies have been read into R using rjson package. Though there are two other packages, jsonlite and RJSONIO, I chose the standard and easy to use functions from  rjason package because RJSONIO has reported performance issues when handling large JSON files and jsonline is specially useful when using APIs where as my project has downloaded JSON files from Kaggle. 
 
 Using the function _fromJSON_, I read four JSON files for four stocks; the obtained _list_ objects have been converted into data frame and all four data frames have been merged. Additional columns such as company and Percentage change for Open/Closing value of the stock have been calculated. 
 

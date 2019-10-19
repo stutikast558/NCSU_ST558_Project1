@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE, eval = TRUE, warning = FALSE)
 ```
 # New York City Demographics
 ## Introduction
-The **Iris flower data set** or **Fisher's Iris data set** is a multivariate data set introduced by the British statistician and biologist Ronald Fisher in his 1936 paper _The use of multiple measurements in taxonomic problems_ as an example of [linear discriminant analysis]( http://wikipedia.org/wiki/Linear_discriminant_analysis).
+**New York City ** is big and has a diverse demographic. To understand how the diversity is spread accross the city, a geographical demographic analysis has been conducted in this project and summary has been published. The map and source information has been obtained from [Center for Urban Research](https://www.gc.cuny.edu/Page-Elements/Academics-Research-Centers-Initiatives/Centers-and-Institutes/Center-for-Urban-Research/CUR-research-initiatives/Communities-of-Interest-in-New-York-City).
 
 ```{r pic, echo=FALSE}  
 knitr::include_graphics("Map1_raceethnreligion.JPG")
@@ -32,6 +32,15 @@ library(DT)
 ```
 ## Data
 
+To analyze the how the demograpic is spread accross the zip codes in New York City, I obtained XML files from City of New York Government website [Catalog data](https://catalog.data.gov/dataset/demographic-statistics-by-zip-code-acfc9)
+
+## Process and Packages
+
+The XML file was read into R using XML package. Though there are other packages such as XML2, I chose the standard and easy to use functions from  XML package because XML2 is newly developed wrapper around the comprehensive libxml2 C library that makes it easier to work with XML and HTML in R. For my standard XML source downladed from New York City Govt website, XML package have reasonable parsing funtions. 
+
+Using the function _xmlParse_, I read source XML file into XML Class. Then I extracted the node level information by identifying the node using getNodeSet function that takes the path information as an argument. I then converted the result node level info into a data frame using xmlToDataFrame function. The result is 46 variable data frame. 
+Based on the percentage demographic, three categorical variables have been developed and added to the data frame whcih were later converted to factors. The rest of the analysis and graphs are based on the caculated categorical variables. 
+
 ### XML source
 ```{r read0, echo=TRUE, include=TRUE,message=FALSE}
 require(XML)
@@ -45,6 +54,7 @@ raw_df2 <- mutate_if(raw_df, is.factor, ~ as.numeric(levels(.x))[.x])
 raw_df2$jurisdiction_name <- as.character(raw_df2$jurisdiction_name)
 #By end of this code chunk. we have completed the preparing the base data frame in raw_df2
 ```
+
 ### Demographic summary by the Zip code (Jurisdiction)
 
 ```{r read1, echo=TRUE, include=TRUE,message=FALSE}
@@ -75,8 +85,9 @@ demo_df$Citizenship <- ordered(demo_df$Citizenship, levels = c("US Citizen", "Pe
 demo_df$Public_Assistance <- ordered(demo_df$Public_Assistance, levels = c("More than one thrid receive", "No/Not much"))
 select (demo_df,jurisdiction_name, Main_Demograph, Citizenship, Public_Assistance) %>% DT::datatable(demo_df,rownames=FALSE)
 ```
+
 ## Numeric Summaries
-We’ll consider three categorical variables from the data set: main demographic, their citizenship status , and whether or not they receive public assistance from the Government.
+We will consider three categorical variables from the data set: main demographic, their citizenship status , and whether or not they receive public assistance from the Government.
 
 ### Full table
 This two way table shows the count of the Jurisdictions by their demographic and citizenship.  
@@ -100,8 +111,10 @@ tab[,,1] %>% knitr::kable(caption="Count of Jurisdictions that have more than on
 ```{r read5, echo=TRUE, include=TRUE,message=FALSE}
 tab[,,2] %>% knitr::kable(caption="Count of Jurisdictions that does not need much Government Public Assistance:")
 ```
+
 ## Visuals
 ### One Variable
+
 Below two bar charts are one variable charts. The first bar chart below indicates the count of the jurisdictions by their predominant demographic (more than 50% population). The second bar chart shows the count of jurisdictionss by their Citizenship status.
 
 ```{r read6, echo=TRUE, include=TRUE,message=FALSE}
@@ -132,3 +145,6 @@ Below bar charts is a three variable chart that indicates count of jurisdictions
 f <- ggplot(demo_df, aes(x=demo_df$Main_Demograph))
 f + geom_bar(aes(fill = as.factor(Public_Assistance)), position = "dodge")+labs(x = "Main Demographic",fill ="")+facet_wrap(demo_df$Citizenship)
 ```
+
+## Conclusion
+The Numerical summaries and visuals show the demographic, citizenship information by the jurisidiction and visual representation of where the Government provided public assistance is used. This is information can used by Govt and Social workers to focus on community training and funding to the areas that need the most.
